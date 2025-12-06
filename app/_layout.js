@@ -74,6 +74,8 @@ function CustomDrawerContent(props) {
         <DrawerItem label="Dashboard" onPress={() => router.push("/")} />
         <DrawerItem label="I Need Help" onPress={() => router.push("/needHelp")} />
         <DrawerItem label="Show Requests" onPress={() => router.push("/showRequests")} />
+        <DrawerItem label="Leaderboard" onPress={() => router.push("/leaderboard")} />
+
       </View>
 
       <View style={{ marginBottom: 20 }}>
