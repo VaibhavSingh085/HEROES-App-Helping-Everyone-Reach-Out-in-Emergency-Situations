@@ -92,6 +92,9 @@ export default function Leaderboard() {
 
                   <View style={{ flex: 1 }}>
                     <Text style={styles.name}>{item.name}</Text>
+                    {item.isVerified && (
+    <Text style={{ marginLeft: 6, color: "#2b8a3e" }}>🎖️</Text>
+  )}
                     <Text style={styles.points}>{item.points} points</Text>
                   </View>
                 </View>
