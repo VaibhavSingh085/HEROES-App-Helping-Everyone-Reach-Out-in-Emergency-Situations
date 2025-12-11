@@ -1,13 +1,13 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
-    arrayUnion,
-    doc,
-    getDoc,
-    increment,
-    updateDoc,
+  arrayUnion,
+  doc,
+  getDoc,
+  increment,
+  updateDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { db } from "../lib/firebase";
 
 export default function EditRequestList() {
@@ -80,13 +80,17 @@ export default function EditRequestList() {
         >
           <Text style={{ color: "white", fontWeight: "bold" }}>⬅ Back</Text>
         </Pressable>
-        <Text>No edit requests currently.</Text>
+        <View style={styles.emptyCard}>
+          <Image source={require("./img.png")} style={styles.emptyIcon} />
+          <Text style={styles.emptyTitle}>No edit requests</Text>
+          <Text style={styles.emptySubtitle}>No one has suggested edits for this complaint yet.</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <ScrollView style={{ padding: 16 }}>
+    <ScrollView style={styles.screen}>
       <Pressable
         onPress={() => router.back()}
         style={{
@@ -102,30 +106,25 @@ export default function EditRequestList() {
       </Pressable>
 
       {requests.map((req, index) => (
-        <View
-          key={index}
-          style={{
-            marginBottom: 12,
-            padding: 12,
-            borderWidth: 1,
-            borderColor: "#ddd",
-            borderRadius: 8,
-          }}
-        >
-          <Text>Editor: {req.editorName}</Text>
-          <Text>New Title: {req.proposedChanges.title}</Text>
-          <Text>New Contact: {req.proposedChanges.contactNumber}</Text>
-          <Text>New Description: {req.proposedChanges.description}</Text>
+        <View key={index} style={styles.card}>
+          <Image source={{ uri: req.editorPhoto || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }} style={styles.avatar} />
 
-          <View style={{ flexDirection: "row", marginTop: 8 }}>
-            <Pressable onPress={() => handleDecision(req, "accepted")}>
-              <Text style={{ color: "green" }}>Accept</Text>
+          <View style={styles.info}>
+            <Text style={styles.editorName}>{req.editorName}</Text>
+            <Text style={styles.editLabel}>Title</Text>
+            <Text style={styles.editValue}>{req.proposedChanges.title || "—"}</Text>
+            <Text style={styles.editLabel}>Contact</Text>
+            <Text style={styles.editValue}>{req.proposedChanges.contactNumber || "—"}</Text>
+            <Text style={styles.editLabel}>Description</Text>
+            <Text style={styles.editValue}>{req.proposedChanges.description || "—"}</Text>
+          </View>
+
+          <View style={styles.actionsColumn}>
+            <Pressable onPress={() => handleDecision(req, "accepted")} style={[styles.actionBtn, styles.acceptBtn]}>
+              <Text style={styles.actionText}>Accept</Text>
             </Pressable>
-            <Pressable
-              onPress={() => handleDecision(req, "rejected")}
-              style={{ marginLeft: 16 }}
-            >
-              <Text style={{ color: "red" }}>Reject</Text>
+            <Pressable onPress={() => handleDecision(req, "rejected")} style={[styles.actionBtn, styles.rejectBtn]}>
+              <Text style={styles.actionText}>Reject</Text>
             </Pressable>
           </View>
         </View>
@@ -133,3 +132,22 @@ export default function EditRequestList() {
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, padding: 16, backgroundColor: "#f4f7fb" },
+  emptyCard: { alignItems: "center", padding: 28, backgroundColor: "#fff", borderRadius: 12, elevation: 3 },
+  emptyIcon: { width: 64, height: 64, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
+  emptySubtitle: { color: "#666", textAlign: "center" },
+  card: { flexDirection: "row", alignItems: "flex-start", backgroundColor: "#fff", padding: 12, borderRadius: 10, marginBottom: 12, elevation: 2 },
+  avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12, backgroundColor: "#eee" },
+  info: { flex: 1 },
+  editorName: { fontSize: 16, fontWeight: "700", marginBottom: 6 },
+  editLabel: { fontSize: 12, color: "#777", marginTop: 6 },
+  editValue: { fontSize: 14, color: "#333", marginTop: 2 },
+  actionsColumn: { marginLeft: 12, justifyContent: "space-between" },
+  actionBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, marginBottom: 8 },
+  acceptBtn: { backgroundColor: "#2e7d32" },
+  rejectBtn: { backgroundColor: "#c62828" },
+  actionText: { color: "white", fontWeight: "700" },
+});

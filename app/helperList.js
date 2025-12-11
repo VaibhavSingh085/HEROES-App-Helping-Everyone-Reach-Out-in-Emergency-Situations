@@ -8,7 +8,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { FlatList, Pressable, Text, View } from "react-native";
+import { FlatList, Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { db } from "../lib/firebase";
 
 export default function HelperList() {
@@ -81,13 +81,17 @@ export default function HelperList() {
           <Text style={{ color: "white", fontWeight: "bold" }}>⬅ Back</Text>
         </Pressable>
 
-        <Text>No helpers currently.</Text>
+        <View style={styles.emptyCard}>
+          <Image source={require("./img.png")} style={styles.emptyIcon} />
+          <Text style={styles.emptyTitle}>No helpers yet</Text>
+          <Text style={styles.emptySubtitle}>No one has volunteered for this complaint yet.</Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
+    <View style={styles.screen}>
       <Pressable
         onPress={goBackToComplaint}
         style={{
@@ -105,32 +109,32 @@ export default function HelperList() {
       <FlatList
         data={helpers}
         keyExtractor={(item, index) => index.toString()}
+        contentContainerStyle={{ paddingBottom: 30 }}
         renderItem={({ item }) => (
-          <View
-            style={{
-              padding: 12,
-              marginBottom: 10,
-              borderWidth: 1,
-              borderColor: "#ddd",
-              borderRadius: 8,
-            }}
-          >
-            <Text>{item.name}</Text>
-            <Text>Status: {item.status}</Text>
+          <View style={styles.card}>
+            <Image
+              source={{ uri: item.photoURL || "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+              style={styles.avatar}
+            />
 
-            {item.status === "pending" && (
-              <View style={{ flexDirection: "row", marginTop: 8 }}>
-                <Pressable onPress={() => updateStatus(item, "accepted")}>
-                  <Text style={{ color: "green" }}>Accept</Text>
+            <View style={styles.info}>
+              <Text style={styles.name}>{item.name}</Text>
+              <Text style={styles.statusText}>{item.status?.toUpperCase() || "PENDING"}</Text>
+            </View>
+
+            {item.status === "pending" ? (
+              <View style={styles.actionsRow}>
+                <Pressable onPress={() => updateStatus(item, "accepted")} style={[styles.actionBtn, styles.acceptBtn]}>
+                  <Text style={styles.actionText}>Accept</Text>
                 </Pressable>
-
-                <Pressable
-                  onPress={() => updateStatus(item, "rejected")}
-                  style={{ marginLeft: 16 }}
-                >
-                  <Text style={{ color: "red" }}>Reject</Text>
+                <Pressable onPress={() => updateStatus(item, "rejected")} style={[styles.actionBtn, styles.rejectBtn]}>
+                  <Text style={styles.actionText}>Reject</Text>
                 </Pressable>
               </View>
+            ) : (
+              <Text style={[styles.statusBadge, item.status === "accepted" ? styles.acceptBadge : styles.rejectBadge]}>
+                {item.status === "accepted" ? "Accepted" : "Rejected"}
+              </Text>
             )}
           </View>
         )}
@@ -138,3 +142,24 @@ export default function HelperList() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, padding: 16, backgroundColor: "#f4f7fb" },
+  emptyCard: { alignItems: "center", padding: 28, backgroundColor: "#fff", borderRadius: 12, elevation: 3 },
+  emptyIcon: { width: 64, height: 64, marginBottom: 12 },
+  emptyTitle: { fontSize: 18, fontWeight: "700", marginBottom: 6 },
+  emptySubtitle: { color: "#666", textAlign: "center" },
+  card: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", padding: 12, borderRadius: 10, marginBottom: 12, elevation: 2 },
+  avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12, backgroundColor: "#eee" },
+  info: { flex: 1 },
+  name: { fontSize: 16, fontWeight: "700" },
+  statusText: { fontSize: 12, color: "#777", marginTop: 4 },
+  actionsRow: { flexDirection: "row" },
+  actionBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, marginLeft: 8 },
+  acceptBtn: { backgroundColor: "#2e7d32" },
+  rejectBtn: { backgroundColor: "#c62828" },
+  actionText: { color: "white", fontWeight: "700" },
+  statusBadge: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, fontWeight: "700" },
+  acceptBadge: { backgroundColor: "#e8f5e9", color: "#2e7d32" },
+  rejectBadge: { backgroundColor: "#ffebee", color: "#c62828" },
+});

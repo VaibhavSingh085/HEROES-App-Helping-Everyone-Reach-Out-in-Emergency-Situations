@@ -3,8 +3,8 @@ import { useRouter } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
+// 🔹 Updated categories (Removed Fire, added Other Request)
 const categories = [
-  "🔥 Fire Emergency",
   "🚑 Medical Emergency",
   "🚨 Theft or Crime In Progress",
   "👶 Missing Person Alert",
@@ -12,6 +12,7 @@ const categories = [
   "🩹 First Aid Support",
   "🐶 Injured Animal Rescue",
   "🐾 Lost Pet Assistance",
+  "📝 Other Request",
 ];
 
 export default function NeedHelp() {
@@ -33,7 +34,7 @@ export default function NeedHelp() {
       ))}
 
       <TouchableOpacity
-        style={[styles.button, !selected && { opacity: 0.5 }]}
+        style={[styles.button, selected === null && { opacity: 0.5 }]}
         disabled={selected === null}
         onPress={() => router.push("/registerComplaint")}
       >
@@ -45,6 +46,7 @@ export default function NeedHelp() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 20, justifyContent: "center" },
+
   heading: {
     fontSize: 20,
     fontWeight: "bold",
@@ -52,6 +54,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#000",
   },
+
   option: {
     padding: 15,
     marginVertical: 6,
@@ -60,14 +63,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
   },
-  selected: { backgroundColor: "#e0e0e0" },
+  selected: {
+    backgroundColor: "#e0e0e0",
+    borderColor: "#888",
+  },
+
   optionText: { color: "#000", fontSize: 16 },
+
   button: {
-    backgroundColor: "red",
+    backgroundColor: "#d32f2f",
     padding: 15,
     borderRadius: 25,
     alignItems: "center",
     marginTop: 20,
   },
+
   buttonText: { color: "white", fontWeight: "bold", fontSize: 16 },
 });

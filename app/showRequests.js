@@ -1,6 +1,6 @@
 // app/showRequests.js
 import { useRouter } from "expo-router";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -17,28 +17,29 @@ export default function ShowRequests() {
   const router = useRouter();
 
   useEffect(() => {
-    const fetchComplaints = async () => {
-      try {
-        const q = query(
-          collection(db, "complaints"),
-          where("status", "==", "open")
-        );
-        const snapshot = await getDocs(q);
+    // Real-time listener (NO refresh needed)
+    const q = query(
+      collection(db, "complaints"),
+      where("status", "==", "open")
+    );
 
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
         const data = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...doc.data(),
         }));
-
         setComplaints(data);
-      } catch (err) {
-        console.error("Error fetching complaints:", err);
-      } finally {
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching complaints:", error);
         setLoading(false);
       }
-    };
+    );
 
-    fetchComplaints();
+    return () => unsubscribe();
   }, []);
 
   if (loading) {
@@ -75,13 +76,17 @@ export default function ShowRequests() {
               marginBottom: 12,
             }}
           >
-          <Text style={{ fontSize: 18, fontWeight: "bold" }}>{item.title}</Text>
-          {item.contactNumber ? (
-          <Text style={{ color: "#333" }}>📞 {item.contactNumber}</Text>
-          ) : (
-          <Text style={{ color: "#999" }}>No contact provided</Text>
-          )}
-          <Text style={{ color: "#555", marginTop: 4 }}>👤 {item.name}</Text>
+            <Text style={{ fontSize: 18, fontWeight: "bold" }}>
+              {item.title}
+            </Text>
+
+            {item.contactNumber ? (
+              <Text style={{ color: "#333" }}>📞 {item.contactNumber}</Text>
+            ) : (
+              <Text style={{ color: "#999" }}>No contact provided</Text>
+            )}
+
+            <Text style={{ color: "#555", marginTop: 4 }}>👤 {item.name}</Text>
 
             {/* View Details button */}
             <Pressable

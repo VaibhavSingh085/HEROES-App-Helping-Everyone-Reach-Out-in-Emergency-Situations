@@ -118,6 +118,7 @@ export default function RegisterComplaint() {
 
       <TextInput
         placeholder="Enter title (required, max 120 chars)"
+        placeholderTextColor="#000"
         value={title}
         onChangeText={(text) => setTitle(text.slice(0, 120))}
         style={{
@@ -126,11 +127,13 @@ export default function RegisterComplaint() {
           padding: 12,
           borderRadius: 8,
           marginBottom: 16,
+          color: "#000",
         }}
       />
 
       <TextInput
         placeholder="Enter contact number (optional)"
+        placeholderTextColor="#000"
         value={contactNumber}
         onChangeText={setContactNumber}
         keyboardType="phone-pad"
@@ -140,11 +143,13 @@ export default function RegisterComplaint() {
           padding: 12,
           borderRadius: 8,
           marginBottom: 16,
+          color: "#000",
         }}
       />
 
       <TextInput
         placeholder="Enter description (optional)"
+        placeholderTextColor="#000"
         value={description}
         onChangeText={setDescription}
         multiline
@@ -155,6 +160,7 @@ export default function RegisterComplaint() {
           borderRadius: 8,
           marginBottom: 16,
           height: 100,
+          color: "#000",
         }}
       />
 
