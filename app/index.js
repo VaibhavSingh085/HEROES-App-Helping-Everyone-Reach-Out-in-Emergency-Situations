@@ -23,22 +23,24 @@ function getDistanceKm(lat1, lon1, lat2, lon2) {
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
 
   const a =
-    Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
       Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) ** 2;
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
 
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
 }
 
 export default function Dashboard() {
-  const { userDoc } = useAuth();
+  const { userDoc } = useAuth(); // contains isVerified flag
   const [location, setLocation] = useState(null);
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // 📍 STEP 1 — Get User Location
+  // 📍 Get user's current location
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
@@ -47,16 +49,12 @@ export default function Dashboard() {
         return;
       }
 
-      try {
-        const loc = await Location.getCurrentPositionAsync({});
-        setLocation(loc.coords);
-      } catch (e) {
-        console.log("Location error:", e);
-      }
+      const loc = await Location.getCurrentPositionAsync({});
+      setLocation(loc.coords);
     })();
   }, []);
 
-  // 🔥 STEP 2 — Real-Time Complaints + Safe Filtering
+  // 🔥 REAL-TIME Fetch of open complaints + verification filtering
   useEffect(() => {
     if (!location) return;
 
@@ -68,34 +66,24 @@ export default function Dashboard() {
         ...doc.data(),
       }));
 
-      // Remove entries with invalid or missing coordinates
-      const validOnly = all.filter((c) => {
-        const lat = c?.location?.latitude;
-        const lng = c?.location?.longitude;
-
-        return (
-          typeof lat === "number" &&
-          typeof lng === "number" &&
-          !isNaN(lat) &&
-          !isNaN(lng)
-        );
-      });
-
-      // If user is verified → show all complaints
+      // Verified user → show ALL complaints
       if (userDoc?.isVerified) {
-        setComplaints(validOnly);
+        setComplaints(all);
         setLoading(false);
         return;
       }
 
-      // If user NOT verified → filter to 10km radius
-      const filtered = validOnly.filter((c) => {
+      // Non-verified user → filter within 10 km
+      const filtered = all.filter((c) => {
+        if (!c.location) return false;
+
         const dist = getDistanceKm(
           location.latitude,
           location.longitude,
           c.location.latitude,
           c.location.longitude
         );
+
         return dist <= 10;
       });
 
@@ -119,7 +107,7 @@ export default function Dashboard() {
 
   return (
     <View style={styles.container}>
-      {/* MAP VIEW */}
+      {/* 🗺️ Map */}
       <MapView
         style={styles.map}
         region={{
@@ -129,7 +117,7 @@ export default function Dashboard() {
           longitudeDelta: 0.05,
         }}
       >
-        {/* User Location */}
+        {/* 🟢 User Location */}
         <Marker
           coordinate={{
             latitude: location.latitude,
@@ -139,34 +127,26 @@ export default function Dashboard() {
           pinColor="green"
         />
 
-        {/* Complaint Markers (Crash-proof) */}
-        {complaints.map((c) => {
-          const lat = c?.location?.latitude;
-          const lng = c?.location?.longitude;
-
-          if (
-            typeof lat !== "number" ||
-            typeof lng !== "number" ||
-            isNaN(lat) ||
-            isNaN(lng)
-          ) {
-            return null; // Skip invalid documents
-          }
-
-          return (
-            <Marker
-              key={c.id}
-              coordinate={{ latitude: lat, longitude: lng }}
-              title={c.title || "Complaint"}
-              description={c.contactNumber ? `📞 ${c.contactNumber}` : ""}
-              pinColor="red"
-              onPress={() => router.push(`/complaintDetails?id=${c.id}`)}
-            />
-          );
-        })}
+        {/* 🔴 Complaint markers */}
+        {complaints.map(
+          (c) =>
+            c.location && (
+              <Marker
+                key={c.id}
+                coordinate={{
+                  latitude: c.location.latitude,
+                  longitude: c.location.longitude,
+                }}
+                title={c.title || "Complaint"}
+                description={c.contactNumber ? `📞 ${c.contactNumber}` : ""}
+                pinColor="red"
+                onPress={() => router.push(`/complaintDetails?id=${c.id}`)}
+              />
+            )
+        )}
       </MapView>
 
-      {/* LEGEND */}
+      {/* 🧭 Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: "green" }]} />
@@ -178,7 +158,7 @@ export default function Dashboard() {
         </View>
       </View>
 
-      {/* LIST */}
+      {/* 📋 Recent Complaints */}
       <View style={styles.listContainer}>
         <Text style={styles.listTitle}>Recent Complaints</Text>
 
@@ -192,14 +172,14 @@ export default function Dashboard() {
             >
               <Text style={styles.cardTitle}>{item.title}</Text>
               <Text style={styles.cardInfo}>
-                {item.contactNumber
-                  ? `📞 ${item.contactNumber}`
-                  : "No contact provided"}
+                {item.contactNumber ? `📞 ${item.contactNumber}` : "No contact provided"}
               </Text>
             </TouchableOpacity>
           )}
+          ListEmptyComponent={<Text>No complaints near you.</Text>}
         />
 
+        {/* View More */}
         {complaints.length > 2 && (
           <TouchableOpacity
             style={styles.viewMoreButton}
@@ -209,6 +189,7 @@ export default function Dashboard() {
           </TouchableOpacity>
         )}
 
+        {/* I Need Help */}
         <TouchableOpacity
           style={styles.helpButton}
           onPress={() => router.push("/needHelp")}
@@ -220,7 +201,6 @@ export default function Dashboard() {
   );
 }
 
-/* STYLES */
 const styles = StyleSheet.create({
   container: { flex: 1 },
   map: { flex: 1 },
@@ -278,3 +258,5 @@ const styles = StyleSheet.create({
   },
   helpText: { color: "white", fontWeight: "bold" },
 });
+
+
